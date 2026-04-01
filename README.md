@@ -1,5 +1,13 @@
 # Options Backtesting Tools
 
+<p align="center">
+  <img
+    src="./docs/images/options-lab-dashboard.png"
+    alt="Options Lab web dashboard (dark theme)"
+    width="920"
+  />
+</p>
+
 ## NO WARRANTY — NO GUARANTEE OF RESULTS
 
 **This software is provided as-is, without warranty of any kind.** There is **no guarantee** that you will achieve any particular outcome, profit, or investment success. Past or simulated performance does not indicate future results.
