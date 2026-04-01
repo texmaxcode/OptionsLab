@@ -2,7 +2,7 @@
 
 <p align="center">
   <img
-    src="./web/public/user-manual/images/ui-dashboard.png"
+    src="https://raw.githubusercontent.com/texmaxcode/OptionsLab/main/web/public/user-manual/images/ui-dashboard.png"
     alt="Options Lab — Overview dashboard with macro charts (screenshot)"
     width="920"
   />
