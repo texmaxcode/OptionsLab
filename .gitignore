@@ -23,6 +23,7 @@ share/python-wheels/
 
 # Environments
 .venv/
+.venv-ci/
 venv/
 env/
 ENV/
