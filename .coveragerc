@@ -1,0 +1,10 @@
+[run]
+source = config,data,storage,models,backtrader_feeds,brokers,strategies,api,features,forecasting,strategy_engine,research_assistant,risk,volatility
+omit = */tests/*,*/venv/*,*/__pycache__/*,scripts/*,forecasting/base.py
+
+[report]
+fail_under = 80
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:

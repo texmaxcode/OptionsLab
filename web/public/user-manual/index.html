@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home — OptionsLab Manual</title>
+  <link rel="stylesheet" href="/user-manual/styles.css" />
+</head>
+<body>
+<nav id="sidebar" aria-label="Manual">
+  <div class="nav-logo">
+    <a href="/user-manual/index.html" class="nav-logo-link"><span>OptionsLab</span></a>
+    <small>User Manual</small>
+  </div>
+  <span class="nav-section">Chapters</span>
+    <a href="/user-manual/index.html" class="active">Home</a>
+    <a href="/user-manual/getting-started.html">Getting started</a>
+    <a href="/user-manual/dashboard.html">Dashboard</a>
+    <a href="/user-manual/concepts.html">Concepts</a>
+    <a href="/user-manual/workflows.html">Workflows</a>
+    <a href="/user-manual/docs.html">Documentation</a>
+    <a href="/user-manual/reference.html">API &amp; glossary</a>
+
+</nav>
+<main>
+  <div class="hero">
+    <h1>OptionsLab <span class="tag">Operator manual</span></h1>
+    <p class="hero-lead">How to <strong>install, configure, and run</strong> the FastAPI backend and Next.js dashboard on your own machine or infrastructure. This HTML bundle ships under <code>/user-manual/</code> in the web app and duplicates topics from the repository <code>docs/</code> folder.</p>
+  </div>
+
+  <figure class="manual-figure">
+    <img src="/user-manual/images/ui-login.png" alt="Sign-in page" width="1440" height="900" loading="lazy" />
+    <figcaption>Sign in — run the API on port 8000 and the web app on port 3000, then open <code>/login</code>.</figcaption>
+  </figure>
+
+  <div class="chapter-grid">
+    <a class="chapter-card" href="/user-manual/getting-started.html">
+      <h2>Getting started</h2>
+      <p>Clone, virtualenv, seed data, uvicorn, <code>npm run dev</code>, registration.</p>
+    </a>
+    <a class="chapter-card" href="/user-manual/dashboard.html">
+      <h2>Dashboard</h2>
+      <p>Data, Macro, Research, Volatility, Backtests, Trade, Settings — with UI screenshots.</p>
+    </a>
+    <a class="chapter-card" href="/user-manual/concepts.html">
+      <h2>Concepts</h2>
+      <p>Options, strategies, volatility, forecasting, Kelly, break-even, macro.</p>
+    </a>
+    <a class="chapter-card" href="/user-manual/workflows.html">
+      <h2>Workflows</h2>
+      <p>End-to-end: new symbol, strategy discovery, position sizing.</p>
+    </a>
+    <a class="chapter-card" href="/user-manual/docs.html">
+      <h2>Documentation</h2>
+      <p>Full reference from <code>docs/</code>: data pipeline, auth, forecasting, AWS deployment, frameworks, TSF architecture.</p>
+    </a>
+    <a class="chapter-card" href="/user-manual/reference.html">
+      <h2>API &amp; glossary</h2>
+      <p>REST endpoints and terminology.</p>
+    </a>
+  </div>
+  <p class="manual-footer-note">Open this manual in the running app at <code>/user-manual/index.html</code>, or open <code>web/public/user-manual/index.html</code> from a checkout.</p>
+
+</main>
+<script src="/user-manual/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workflows — OptionsLab Manual</title>
+  <link rel="stylesheet" href="/user-manual/styles.css" />
+</head>
+<body>
+<nav id="sidebar" aria-label="Manual">
+  <div class="nav-logo">
+    <a href="/user-manual/index.html" class="nav-logo-link"><span>OptionsLab</span></a>
+    <small>User Manual</small>
+  </div>
+  <span class="nav-section">Chapters</span>
+    <a href="/user-manual/index.html">Home</a>
+    <a href="/user-manual/getting-started.html">Getting started</a>
+    <a href="/user-manual/dashboard.html">Dashboard</a>
+    <a href="/user-manual/concepts.html">Concepts</a>
+    <a href="/user-manual/workflows.html" class="active">Workflows</a>
+    <a href="/user-manual/docs.html">Documentation</a>
+    <a href="/user-manual/reference.html">API &amp; glossary</a>
+
+  <span class="nav-section">On this page</span>
+    <a href="#workflow-new-symbol">New symbol</a>
+    <a href="#workflow-strategy">Strategy discovery</a>
+    <a href="#workflow-size">Position size</a>
+
+</nav>
+<main>
+<section id="workflow-new-symbol">
+    <h1>Workflow — Analyze a New Symbol</h1>
+    <p>End-to-end walkthrough from zero to a fully-analyzed position.</p>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <strong>Sync underlying OHLCV bars</strong>
+          <p>Data &amp; Symbols → enter the symbol and date range → click Sync. Or use the CLI: <code>scripts/sync_data.py --source massive --symbol AAPL --from 2024-01-01 --to 2024-12-31</code></p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <strong>Check the Volatility Dashboard</strong>
+          <p>Volatility → select symbol → Analyze. Note the IV Rank and the Strategy Guidance recommendation before touching the Research page.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <strong>Run a forecast</strong>
+          <p>Research &amp; AI → Run Forecast. Choose ARIMA for speed or GB for a non-linear read. Horizon 1–5 is most useful for near-term option selection.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <strong>Evaluate the right strategy for the vol environment</strong>
+          <p>The Volatility Dashboard said high IVR → try an iron condor or credit spread. Enter strikes around the expected move boundaries and click Evaluate strategy.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <strong>Enter the premium and check break-even</strong>
+          <p>Fill in "Premium paid" to see the break-even prices on the results card. Confirm the range is comfortable relative to the Expected Move from the Volatility Dashboard.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <strong>Size the position</strong>
+          <p>Position Sizing card → enter capital, win rate, avg win/loss → Calculate. Use the <strong>Half-Kelly %</strong> or Fixed Risk output to determine how much capital to commit.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<section id="workflow-strategy">
+    <h1>Workflow — Let the Tool Pick a Strategy</h1>
+    <p>Use automated strategy discovery when you are unsure which structure fits best.</p>
+
+    <pre><code>POST /strategy-engine/discover
+{
+  "symbol": "AAPL",
+  "from_date": "2024-01-01",
+  "to_date": "2024-06-30",
+  "horizon": 5,
+  "model": "arima"
+}</code></pre>
+
+    <p>The engine will:</p>
+    <ol>
+      <li>Run a forecast on the symbol/range.</li>
+      <li>Evaluate all six strategy types with auto-generated parameters (±2% width by default).</li>
+      <li>Return them ranked by <strong>expected value descending</strong>.</li>
+    </ol>
+    <p>Use the top result as a starting point, then fine-tune strike widths and verify break-even prices manually in the Evaluate strategy card.</p>
+  </section>
+
+<section id="workflow-size">
+    <h1>Workflow — Size a Position</h1>
+    <p>Never enter a trade without knowing your position size in advance. Here is the recommended decision tree:</p>
+
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Know your edge estimate.</strong>
+        <p>From past backtests or forward-test data: what is your historical win rate on this strategy type? What is the average win vs. average loss? Be honest — edge estimates degrade in live trading.</p>
+      </div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Enter your numbers in the Position Sizing card.</strong>
+        <p>Conservative defaults: 55% win rate, avg win 1.5× avg loss.</p>
+      </div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Read Half-Kelly % — this is your risk budget for this trade.</strong>
+        <p>Example: Half-Kelly = 5% of $10,000 = $500 at risk.</p>
+      </div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Compute contracts from the risk budget.</strong>
+        <p>If the strategy's max loss per contract is $200 (net debit × 100 multiplier), then $500 / $200 = 2 contracts max.</p>
+      </div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Cross-check with the Fixed Risk % rule.</strong>
+        <p>Many traders cap individual trade risk at 1–2% of capital regardless of Kelly. Use whichever is more conservative.</p>
+      </div></div>
+    </div>
+  </section>
+</main>
+<script src="/user-manual/nav.js"></script>
+</body>
+</html>

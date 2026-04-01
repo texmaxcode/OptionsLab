@@ -1,0 +1,9 @@
+# CDK dependencies for the infrastructure directory.
+# Install in a separate venv or into the shared project venv:
+#   pip install -r infrastructure/requirements.txt
+
+# Core CDK library — contains all stable constructs including
+# aws_apigatewayv2, aws_apigatewayv2_integrations, aws_amplify,
+# aws_lambda, aws_rds, aws_ec2, aws_secretsmanager, aws_logs, etc.
+aws-cdk-lib>=2.170.0
+constructs>=10.4.0

@@ -1,0 +1,56 @@
+# --- Lambda Docker build context exclusions ---
+# Keep this file at the repo root; applies to Dockerfile.lambda.
+# Only production source directories are copied (see Dockerfile.lambda).
+
+# Frontend (built separately via Amplify)
+web/
+web/node_modules/
+web/.next/
+web/out/
+
+# Tests and dev tooling
+tests/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# CDK infrastructure (not needed in Lambda)
+infrastructure/
+cdk.out/
+
+# Scripts (CLI entry points; not needed in Lambda runtime)
+scripts/
+
+# Git and editor files
+.git/
+.gitignore
+.env
+.env.*
+*.env
+
+# Documentation
+*.md
+docs/
+
+# Python artefacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Local DB and secrets
+*.db
+trading.db
+venv/
+.venv/
+
+# Node.js artefacts (from serverless or package.json)
+node_modules/
+.serverless/
+package.json
+package-lock.json
+serverless.yml

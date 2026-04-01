@@ -1,0 +1,32 @@
+# Lambda Docker image for the OptionsLab FastAPI backend.
+# Heavy native deps (numpy, statsmodels, scikit-learn, bcrypt) require
+# compilation against Amazon Linux 2; the Docker image avoids the 250 MB
+# zip-package limit (image limit is 10 GB).
+FROM public.ecr.aws/lambda/python:3.12
+
+# Install Python dependencies first so this layer is cached separately
+# from application code changes.
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Matplotlib backend: prevent GUI init errors in Lambda (no display)
+ENV MPLBACKEND=Agg
+
+# Copy only the production source directories.
+# web/, tests/, infrastructure/, and scripts/ are excluded via .dockerignore.
+COPY api/            api/
+COPY config/         config/
+COPY models/         models/
+COPY storage/        storage/
+COPY brokers/        brokers/
+COPY data/           data/
+COPY features/       features/
+COPY forecasting/    forecasting/
+COPY strategies/     strategies/
+COPY strategy_engine/ strategy_engine/
+COPY research_assistant/ research_assistant/
+COPY risk/           risk/
+COPY backtrader_feeds/ backtrader_feeds/
+
+# Mangum handler — see api/handler.py
+CMD ["api.handler.handler"]

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API & glossary — OptionsLab Manual</title>
+  <link rel="stylesheet" href="/user-manual/styles.css" />
+</head>
+<body>
+<nav id="sidebar" aria-label="Manual">
+  <div class="nav-logo">
+    <a href="/user-manual/index.html" class="nav-logo-link"><span>OptionsLab</span></a>
+    <small>User Manual</small>
+  </div>
+  <span class="nav-section">Chapters</span>
+    <a href="/user-manual/index.html">Home</a>
+    <a href="/user-manual/getting-started.html">Getting started</a>
+    <a href="/user-manual/dashboard.html">Dashboard</a>
+    <a href="/user-manual/concepts.html">Concepts</a>
+    <a href="/user-manual/workflows.html">Workflows</a>
+    <a href="/user-manual/docs.html">Documentation</a>
+    <a href="/user-manual/reference.html" class="active">API &amp; glossary</a>
+
+  <span class="nav-section">On this page</span>
+    <a href="#api-ref">API endpoints</a>
+    <a href="#glossary">Glossary</a>
+
+</nav>
+<main>
+<section id="api-ref">
+    <h1>Key API Endpoints</h1>
+    <p>Narrative guides (data pipeline, forecasting, risk, volatility, macro) are in <a href="/user-manual/docs.html">Documentation</a>.</p>
+    <p>All endpoints require a Bearer token from <code>POST /auth/login</code> except where documented otherwise. The interactive OpenAPI (Swagger) UI is at <code>/docs</code> on your API process (e.g. <code>http://localhost:8000/docs</code> while <code>uvicorn</code> runs locally). In production, API docs may be disabled — rely on this manual and <code>docs/</code> in the repo.</p>
+
+    <h2>Authentication</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/auth/register</code></td><td>Create a new user account.</td></tr>
+          <tr><td>POST</td><td><code>/auth/login</code></td><td>Returns a JWT token. Set-Cookie header included for browser use.</td></tr>
+          <tr><td>GET</td><td><code>/auth/me</code></td><td>Returns current user info. Use to verify token validity.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Forecast &amp; Strategy</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/forecast/run</code></td><td>Run ARIMA or GB forecast. Returns direction, forecast values, macro_enriched flag.</td></tr>
+          <tr><td>GET</td><td><code>/forecast/runs</code></td><td>List registered forecast runs. Query: symbol, model_type, limit.</td></tr>
+          <tr><td>POST</td><td><code>/strategy-engine/evaluate</code></td><td>Evaluate one strategy with forecast distribution. Optional: premium_paid, include_backtest.</td></tr>
+          <tr><td>POST</td><td><code>/strategy-engine/discover</code></td><td>Auto-run forecast and rank all six strategies by expected value.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Volatility</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>GET</td><td><code>/volatility/{symbol}</code></td><td>HV-10/20/30/60, IV Rank, IV Percentile, Expected Move (30d), IV and HV-20 time series.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Risk Tools</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/risk/position-size</code></td><td>Kelly, Half-Kelly, fixed risk, and max contracts from capital + win/loss inputs.</td></tr>
+          <tr><td>POST</td><td><code>/risk/breakeven</code></td><td>Break-even prices for a strategy type given premium paid.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Research (LLM + RAG)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/research/analyze</code></td><td>Full pipeline: forecast → strategy evaluation → RAG-augmented LLM explanation.</td></tr>
+          <tr><td>POST</td><td><code>/research/explain</code></td><td>LLM explanation for a provided forecast/strategy summary.</td></tr>
+          <tr><td>POST</td><td><code>/research/rag/ingest</code></td><td>Add a custom document to the RAG knowledge base.</td></tr>
+          <tr><td>POST</td><td><code>/research/rag/retrieve</code></td><td>Debug: fetch top-k RAG chunks for a query.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Data</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>GET</td><td><code>/symbols</code></td><td>List all symbols stored in the DB.</td></tr>
+          <tr><td>GET</td><td><code>/symbols/{symbol}/bars</code></td><td>Paginated OHLCV bars. Query: from_date, to_date, page, page_size.</td></tr>
+          <tr><td>GET</td><td><code>/symbols/{symbol}/contracts</code></td><td>All options contracts for a symbol.</td></tr>
+          <tr><td>POST</td><td><code>/backtests/run</code></td><td>Run a Backtrader backtest. Returns equity curve and trades.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+<section id="glossary">
+    <h1>Glossary</h1>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+        <tbody>
+          <tr><td><strong>ATM</strong></td><td>At the money. The strike equals (or is closest to) the current underlying price.</td></tr>
+          <tr><td><strong>ARIMA</strong></td><td>AutoRegressive Integrated Moving Average. A classical statistical model for time-series prediction.</td></tr>
+          <tr><td><strong>Break-even</strong></td><td>The underlying price at expiry where a strategy's net P&amp;L equals zero.</td></tr>
+          <tr><td><strong>DTE</strong></td><td>Days to expiration. The number of calendar days remaining until an option expires.</td></tr>
+          <tr><td><strong>Expected Move</strong></td><td>The market's implied ±1σ price range over a period, computed from IV.</td></tr>
+          <tr><td><strong>Expected Value (EV)</strong></td><td>The probability-weighted average payoff of a strategy across all outcome scenarios.</td></tr>
+          <tr><td><strong>FRED</strong></td><td>Federal Reserve Economic Data — the St. Louis Fed's free economic data repository.</td></tr>
+          <tr><td><strong>Greeks</strong></td><td>Delta, Gamma, Theta, Vega, Rho — sensitivities of an option's price to market variables.</td></tr>
+          <tr><td><strong>HV</strong></td><td>Historical Volatility. Annualized std dev of log returns over a rolling window.</td></tr>
+          <tr><td><strong>ITM</strong></td><td>In the money. Exercising the option now would be profitable.</td></tr>
+          <tr><td><strong>IV</strong></td><td>Implied Volatility. The vol value that makes a Black-Scholes price match the market price.</td></tr>
+          <tr><td><strong>IVP</strong></td><td>IV Percentile. % of past trading days where IV was lower than today.</td></tr>
+          <tr><td><strong>IVR</strong></td><td>IV Rank. Where today's IV sits in the past year's high/low range, 0–100.</td></tr>
+          <tr><td><strong>JWT</strong></td><td>JSON Web Token. A self-contained, cryptographically signed auth token.</td></tr>
+          <tr><td><strong>Kelly Criterion</strong></td><td>Formula for the optimal fraction of capital to risk per trade to maximize long-run growth.</td></tr>
+          <tr><td><strong>OTM</strong></td><td>Out of the money. Exercising the option now would not be profitable.</td></tr>
+          <tr><td><strong>P(profit)</strong></td><td>Probability of profit. The probability that a strategy expires with positive P&amp;L.</td></tr>
+          <tr><td><strong>Premium</strong></td><td>The price paid by the option buyer to the seller.</td></tr>
+          <tr><td><strong>RAG</strong></td><td>Retrieval-Augmented Generation. Injecting relevant knowledge-base chunks into an LLM prompt.</td></tr>
+          <tr><td><strong>Sharpe Ratio</strong></td><td>Return per unit of risk: (annualized return − risk-free rate) / annualized volatility.</td></tr>
+          <tr><td><strong>Theta decay</strong></td><td>The daily erosion of an option's time value as expiry approaches.</td></tr>
+          <tr><td><strong>VaR</strong></td><td>Value at Risk. The maximum expected loss at a given confidence level over a period.</td></tr>
+          <tr><td><strong>Vega</strong></td><td>Sensitivity of an option's price to a 1% change in implied volatility.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top:2rem; font-size: 0.82rem; color: var(--muted);">
+      OptionsLab is open-source software. For bug reports and feature requests, open an issue in the repository.
+      See the repository <code>README.md</code> (project root) and <code>docs/DEPLOYMENT.md</code> for setup and AWS deployment.
+    </p>
+  </section>
+</main>
+<script src="/user-manual/nav.js"></script>
+</body>
+</html>

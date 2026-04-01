@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting started — OptionsLab Manual</title>
+  <link rel="stylesheet" href="/user-manual/styles.css" />
+</head>
+<body>
+<nav id="sidebar" aria-label="Manual">
+  <div class="nav-logo">
+    <a href="/user-manual/index.html" class="nav-logo-link"><span>OptionsLab</span></a>
+    <small>User Manual</small>
+  </div>
+  <span class="nav-section">Chapters</span>
+    <a href="/user-manual/index.html">Home</a>
+    <a href="/user-manual/getting-started.html" class="active">Getting started</a>
+    <a href="/user-manual/dashboard.html">Dashboard</a>
+    <a href="/user-manual/concepts.html">Concepts</a>
+    <a href="/user-manual/workflows.html">Workflows</a>
+    <a href="/user-manual/docs.html">Documentation</a>
+    <a href="/user-manual/reference.html">API &amp; glossary</a>
+
+  <span class="nav-section">On this page</span>
+    <a href="#intro">Introduction</a>
+    <a href="#quickstart">Quick start</a>
+    <a href="#login">Login</a>
+    <a href="#demo-data">Demo data</a>
+
+</nav>
+<main>
+<section id="intro">
+    <h1>Introduction</h1>
+    <p>
+      <strong>OptionsLab</strong> is an open-source options research and backtesting stack you run yourself: FastAPI backend, SQLite or Postgres, and a Next.js dashboard. It combines:
+    </p>
+    <ul>
+      <li><strong>Historical backtesting</strong> — run stock and options strategies against your own synced data.</li>
+      <li><strong>Time-series forecasting (AI)</strong> — ARIMA and gradient-boosting models to predict short-term price direction.</li>
+      <li><strong>Strategy engine</strong> — evaluate options payoffs using forecast distributions, with automated strategy discovery.</li>
+      <li><strong>Volatility Dashboard</strong> — Historical Volatility, IV Rank, IV Percentile, and Expected Move to time strategy entry.</li>
+      <li><strong>Risk tools</strong> — Kelly Criterion position sizing and break-even price analysis.</li>
+      <li><strong>Research Assistant</strong> — GPT-4o-mini (or placeholder) with a built-in financial RAG knowledge base for plain-language explanations.</li>
+      <li><strong>Macro data</strong> — FRED, BLS, and BEA economic indicators charted alongside your trading results.</li>
+      <li><strong>E*TRADE integration</strong> — live and sandbox order placement (optional).</li>
+    </ul>
+    <div class="callout info">
+      <strong>Who is this for?</strong>
+      Operators and traders who will clone the repo, install dependencies, and keep the API and web processes running. End users only need the dashboard; this manual focuses on what you need to run it.
+    </div>
+  </section>
+
+<section id="quickstart">
+    <h1>Quick start</h1>
+    <p>You need <strong>Python 3.10+</strong>, <strong>Node.js 18+</strong>, and <strong>Git</strong>. Use two terminals: one for the API (port <strong>8000</strong>), one for Next.js (port <strong>3000</strong>).</p>
+
+    <figure class="manual-figure">
+      <img src="/user-manual/images/ui-register.png" alt="Create account form" width="1440" height="900" loading="lazy" />
+      <figcaption>Registration page at <code>/register</code> — the UI talks to the API URL from <code>NEXT_PUBLIC_API_URL</code> or the same host on port 8000.</figcaption>
+    </figure>
+
+    <h2>Prerequisites</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Requirement</th><th>Version</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Python</td><td>3.10+</td><td>FastAPI backend.</td></tr>
+          <tr><td>Node.js</td><td>18+</td><td>Next.js frontend.</td></tr>
+          <tr><td>Git</td><td>any</td><td>Clone the repository.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Installation</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Clone and set up Python virtualenv</strong>
+        <pre><code>git clone https://github.com/your-org/OptionsLab
+cd OptionsLab
+python3 -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
+pip install -r requirements.txt</code></pre>
+      </div></div>
+
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Seed demo data (no API keys required)</strong>
+        <pre><code>PYTHONPATH=. python scripts/seed_dummy_data.py</code></pre>
+        <p>Creates a local SQLite database with AAPL and MSFT price history so every feature can be explored immediately.</p>
+      </div></div>
+
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Start the API server</strong>
+        <pre><code>PYTHONPATH=. uvicorn api.main:app --reload --host 0.0.0.0 --port 8000</code></pre>
+      </div></div>
+
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Start the frontend (new terminal tab)</strong>
+        <pre><code>cd web && npm install && npm run dev</code></pre>
+      </div></div>
+
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Open the app</strong>
+        <p>Open <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer">http://localhost:3000</a> (or your machine’s LAN IP on port 3000). Go to <code>/register</code>, create an account, then use the dashboard.</p>
+      </div></div>
+    </div>
+
+    <div class="callout tip">
+      <strong>LAN access</strong>
+      Next dev binds to <code>0.0.0.0</code>. From another device use <code>http://&lt;host-ip&gt;:3000</code>. The UI defaults the API to the same hostname on port 8000 unless <code>NEXT_PUBLIC_API_URL</code> is set in <code>web/.env.local</code>.
+    </div>
+
+    <div class="callout info">
+      <strong>Environment</strong>
+      Create a <code>.env</code> in the repo root for the API (see root <code>README.md</code>). Optional: <code>web/.env.local</code> with <code>NEXT_PUBLIC_API_URL=http://localhost:8000</code> if the API is not on the same host as the page.
+    </div>
+  </section>
+
+<section id="login">
+    <h1>Registration &amp; Login</h1>
+    <p>OptionsLab uses <strong>JWT-based authentication</strong>. Every user has a private account; multiple users can share one server instance.</p>
+
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Create an account</strong>
+        <p>Open <code>/register</code> on your web origin (e.g. <code>http://localhost:3000/register</code>). Enter your <strong>email</strong> and password (at least 8 characters). Passwords are hashed with bcrypt — never stored in plain text.</p>
+      </div></div>
+
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Sign in</strong>
+        <p>Open <code>/login</code>. On success, a JWT is stored in <strong>localStorage</strong> and sent on API requests. Tokens expire after <strong>24 hours</strong>; sign in again to renew.</p>
+      </div></div>
+
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Sign out</strong>
+        <p>Click <strong>Sign out</strong> in the sidebar. This clears local storage; the token is not revoked server-side (stateless JWT).</p>
+      </div></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>Production note</strong>
+      Set <code>JWT_SECRET_KEY</code> to a strong random value in your <code>.env</code> before deployment:
+      <code>python -c "import secrets; print(secrets.token_hex(32))"</code>
+    </div>
+  </section>
+
+<section id="demo-data">
+    <h1>Demo Data</h1>
+    <p>On a <strong>local or self-hosted</strong> instance, the seed script populates the database with realistic synthetic OHLCV bars so you can try every feature without API keys:</p>
+    <pre><code>PYTHONPATH=. python scripts/seed_dummy_data.py</code></pre>
+    <p>Options:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Flag</th><th>Default</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>--symbols AAPL,MSFT</code></td><td>AAPL, MSFT</td><td>Underlying symbols to seed.</td></tr>
+          <tr><td><code>--from 2024-01-01</code></td><td>2024-01-01</td><td>Start date for price series.</td></tr>
+          <tr><td><code>--to 2024-12-31</code></td><td>2024-12-31</td><td>End date.</td></tr>
+          <tr><td><code>--no-options</code></td><td>off</td><td>Skip seeding one options contract.</td></tr>
+          <tr><td><code>--reset</code></td><td>off</td><td>Drop and recreate all tables first.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<script src="/user-manual/nav.js"></script>
+</body>
+</html>

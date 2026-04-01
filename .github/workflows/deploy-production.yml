@@ -1,0 +1,136 @@
+name: Deploy — Production
+
+# Triggers only on version tags (v1.0.0, v1.2.3, etc.)
+# or a manual workflow dispatch with explicit confirmation.
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy-production" to confirm'
+        required: true
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false   # never cancel an in-flight production deploy
+
+jobs:
+  guard:
+    name: Confirm production deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check manual confirmation
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "deploy-production" ]; then
+            echo "Confirmation string does not match. Aborting."
+            exit 1
+          fi
+
+  deploy:
+    name: Deploy production stacks
+    needs: guard
+    runs-on: ubuntu-latest
+    environment: production    # maps to GitHub Environment 'production' (for secrets + approvals)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # ---------------------------------------------------------------- #
+      # Install tools
+      # ---------------------------------------------------------------- #
+      - name: Install AWS CDK CLI
+        run: npm install -g aws-cdk
+
+      - name: Install CDK Python dependencies
+        run: pip install -r infrastructure/requirements.txt
+
+      # ---------------------------------------------------------------- #
+      # Configure AWS credentials
+      # Secrets stored in GitHub Environment 'production':
+      #   PROD_AWS_ACCESS_KEY_ID
+      #   PROD_AWS_SECRET_ACCESS_KEY
+      # Variables stored in GitHub Environment 'production':
+      #   AWS_ACCOUNT_ID
+      #   AWS_REGION
+      #   GITHUB_REPO_URL
+      # ---------------------------------------------------------------- #
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # ---------------------------------------------------------------- #
+      # Bootstrap (idempotent)
+      # ---------------------------------------------------------------- #
+      - name: CDK bootstrap
+        run: >
+          cdk bootstrap
+          aws://${{ vars.AWS_ACCOUNT_ID }}/${{ vars.AWS_REGION }}
+        working-directory: infrastructure
+
+      # ---------------------------------------------------------------- #
+      # Deploy — production stacks have no suffix in their names
+      # ---------------------------------------------------------------- #
+      - name: CDK deploy — data stack
+        run: >
+          cdk deploy TradingDataStack
+          --require-approval never
+          --context stage=production
+          --context account=${{ vars.AWS_ACCOUNT_ID }}
+          --context region=${{ vars.AWS_REGION }}
+        working-directory: infrastructure
+
+      - name: CDK deploy — API stack
+        run: >
+          cdk deploy TradingApiStack
+          --require-approval never
+          --context stage=production
+          --context account=${{ vars.AWS_ACCOUNT_ID }}
+          --context region=${{ vars.AWS_REGION }}
+        working-directory: infrastructure
+
+      - name: CDK deploy — Amplify stack
+        if: vars.GITHUB_REPO_URL != ''
+        run: >
+          cdk deploy TradingAmplifyStack
+          --require-approval never
+          --context stage=production
+          --context account=${{ vars.AWS_ACCOUNT_ID }}
+          --context region=${{ vars.AWS_REGION }}
+          --context github_repo=${{ vars.GITHUB_REPO_URL }}
+        working-directory: infrastructure
+
+      # ---------------------------------------------------------------- #
+      # Post-deploy smoke test
+      # ---------------------------------------------------------------- #
+      - name: Smoke test — health endpoint
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name TradingApiStack \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text)
+          echo "API URL: $API_URL"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/health")
+          echo "Health status: $STATUS"
+          [ "$STATUS" = "200" ] || (echo "Health check failed" && exit 1)
+
+      # ---------------------------------------------------------------- #
+      # Tag the deployed commit in git for traceability
+      # ---------------------------------------------------------------- #
+      - name: Record deployment
+        run: |
+          echo "Deployed ${{ github.ref_name }} to production at $(date -u '+%Y-%m-%dT%H:%M:%SZ')"

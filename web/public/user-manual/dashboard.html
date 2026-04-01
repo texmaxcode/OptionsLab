@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — OptionsLab Manual</title>
+  <link rel="stylesheet" href="/user-manual/styles.css" />
+</head>
+<body>
+<nav id="sidebar" aria-label="Manual">
+  <div class="nav-logo">
+    <a href="/user-manual/index.html" class="nav-logo-link"><span>OptionsLab</span></a>
+    <small>User Manual</small>
+  </div>
+  <span class="nav-section">Chapters</span>
+    <a href="/user-manual/index.html">Home</a>
+    <a href="/user-manual/getting-started.html">Getting started</a>
+    <a href="/user-manual/dashboard.html" class="active">Dashboard</a>
+    <a href="/user-manual/concepts.html">Concepts</a>
+    <a href="/user-manual/workflows.html">Workflows</a>
+    <a href="/user-manual/docs.html">Documentation</a>
+    <a href="/user-manual/reference.html">API &amp; glossary</a>
+
+  <span class="nav-section">On this page</span>
+    <a href="#page-overview">Overview</a>
+    <a href="#page-data">Data &amp; symbols</a>
+    <a href="#page-macro">Macro</a>
+    <a href="#page-research">Research &amp; AI</a>
+    <a href="#page-volatility">Volatility</a>
+    <a href="#page-backtests">Backtests</a>
+    <a href="#page-trade">Trade</a>
+    <a href="#page-settings">Settings</a>
+
+</nav>
+<main>
+<section id="page-overview">
+    <h1>Overview Page</h1>
+    <p>The landing page after login. Gives a quick-access hub and shows the latest stored macro indicators as sparkline charts.</p>
+    <figure class="manual-figure">
+      <img src="/user-manual/images/ui-dashboard.png" alt="Dashboard overview after sign-in" width="1440" height="900" loading="lazy" />
+      <figcaption>Typical dashboard after registration — sidebar navigation for all lab sections.</figcaption>
+    </figure>
+
+    <div class="page-cards">
+      <div class="page-card">
+        <div class="card-icon">📊</div>
+        <h4>Backtest history</h4>
+        <p>Jump to all past backtests. Click any row to inspect the equity curve and trade list.</p>
+      </div>
+      <div class="page-card">
+        <div class="card-icon">🤖</div>
+        <h4>Research &amp; AI</h4>
+        <p>Run forecasts, evaluate strategies, and get AI-powered explanations.</p>
+      </div>
+      <div class="page-card">
+        <div class="card-icon">🌐</div>
+        <h4>Macro &amp; economic data</h4>
+        <p>Visualize GDP, CPI, VIX, and other indicators alongside your trading results.</p>
+      </div>
+    </div>
+
+    <p>Below the hub cards, up to six stored macro series are shown as mini charts (1-year window). If no macro data has been synced yet, an empty state with a link to the Macro page is displayed.</p>
+  </section>
+
+<section id="page-data">
+    <h1>Data &amp; Symbols Page</h1>
+    <p>Browse, sync, and inspect all market data stored in the local database.</p>
+    <figure class="manual-figure">
+      <img src="/user-manual/images/ui-data.png" alt="Data and symbols page" width="1440" height="900" loading="lazy" />
+      <figcaption>Data &amp; symbols — bars, contracts, sync controls.</figcaption>
+    </figure>
+
+    <h2>Syncing data</h2>
+    <p>Use the sidebar controls to pick a symbol, date range, and source, then click <strong>Sync now</strong>. Alternatively, use the CLI:</p>
+    <pre><code># Massive (historical OHLCV + options)
+PYTHONPATH=. python scripts/sync_data.py --source massive \
+  --symbol AAPL --from 2024-01-01 --to 2024-12-31
+
+# E*TRADE (quotes + option chain snapshot)
+PYTHONPATH=. python scripts/sync_data.py --source etrade \
+  --symbol AAPL --options --max-contracts 50</code></pre>
+
+    <h2>Browsing data</h2>
+    <p>Select a symbol from the dropdown to see:</p>
+    <ul>
+      <li><strong>Candlestick chart</strong> — OHLCV price history. Highlighted indices appear when a backtest is selected.</li>
+      <li><strong>Paginated bars table</strong> — All underlying bars with open, high, low, close, volume.</li>
+      <li><strong>Contracts list</strong> — All stored options contracts for the symbol (strike, expiry, type).</li>
+    </ul>
+
+    <div class="callout tip">
+      <strong>Price privacy</strong>
+      When the controls panel is open, prices on the chart are dimmed for focus. Prices are visible when you collapse the controls panel.
+    </div>
+  </section>
+
+<section id="page-macro">
+    <h1>Macro &amp; Economics Page</h1>
+    <p>Pull in economic indicators from FRED, BLS, and BEA to put your options strategies in macroeconomic context.</p>
+    <figure class="manual-figure">
+      <img src="/user-manual/images/ui-economic.png" alt="Macro and economics charts" width="1440" height="900" loading="lazy" />
+      <figcaption>Macro &amp; economics — series loader and charts.</figcaption>
+    </figure>
+
+    <h2>Loading data</h2>
+    <p>Pick a source and series ID from the presets, choose a date range, and click <strong>Load live</strong> to fetch from the API (requires the relevant API key in Settings or <code>.env</code>). Click <strong>Save to DB</strong> to persist it for offline use.</p>
+
+    <h2>Bulk import</h2>
+    <p>Import all preset series at once via the CLI (requires the API server running):</p>
+    <pre><code>PYTHONPATH=. python3 scripts/sync_economic.py \
+  --all-presets --from 2015-01-01 --to 2024-12-31 --to-db</code></pre>
+
+    <h2>Available series (presets)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source</th><th>ID</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>FRED</td><td>GDP</td><td>Real GDP (quarterly) — <a href="https://fred.stlouisfed.org/series/GDP" target="_blank">fred.stlouisfed.org</a></td></tr>
+          <tr><td>FRED</td><td>CPIAUCSL</td><td>Consumer Price Index — <a href="https://fred.stlouisfed.org/series/CPIAUCSL" target="_blank">fred.stlouisfed.org</a></td></tr>
+          <tr><td>FRED</td><td>UNRATE</td><td>U.S. Unemployment Rate</td></tr>
+          <tr><td>FRED</td><td>DGS10</td><td>10-Year Treasury Yield</td></tr>
+          <tr><td>FRED</td><td>VIXCLS</td><td>CBOE VIX Volatility Index</td></tr>
+          <tr><td>FRED</td><td>DEXUSEU</td><td>EUR/USD Exchange Rate</td></tr>
+          <tr><td>BLS</td><td>CUUR0000SA0</td><td>CPI-U, all items (BLS)</td></tr>
+          <tr><td>BEA</td><td>T10101</td><td>U.S. GDP NIPA Table 1.1.1</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+<section id="page-research">
+    <h1>Research &amp; AI Page</h1>
+    <p>The core analytical engine of OptionsLab. Four interconnected cards work together in a natural trading workflow:</p>
+    <figure class="manual-figure">
+      <img src="/user-manual/images/ui-research.png" alt="Research and AI page" width="1440" height="900" loading="lazy" />
+      <figcaption>Forecast, strategy evaluation, full analysis, position sizing, and recent runs.</figcaption>
+    </figure>
+
+    <h2>1 · Run Forecast</h2>
+    <p>Fit a time-series model on historical bars and produce a short-term direction signal.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Symbol</td><td>Must be synced to the DB first.</td></tr>
+          <tr><td>From / To</td><td>Training period. Pre-filled from Settings defaults.</td></tr>
+          <tr><td>Model</td><td><strong>ARIMA</strong> — autoregressive linear model, fast, good for trend. <strong>Gradient Boost</strong> — tree ensemble on lagged features, better for non-linear patterns.</td></tr>
+          <tr><td>Horizon</td><td>Days ahead to forecast (1–30).</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Result</strong>: Direction badge (<span class="badge green">up</span> / <span class="badge red">down</span> / <span class="badge gray">flat</span>) and the final forecast price value.</p>
+
+    <h2>2 · Evaluate Strategy</h2>
+    <p>Use the forecast as an input to compute the expected payoff of an options strategy.</p>
+
+    <p><strong>Inputs (Row 1 — always visible):</strong></p>
+    <ul>
+      <li><strong>Strategy type</strong> — straddle, bull call spread, bear put spread, iron condor, calendar spread (call or put).</li>
+      <li><strong>Forecast mean</strong> — the expected underlying price at expiry. Auto-filled from "Run Forecast".</li>
+      <li><strong>Forecast std</strong> — optional standard deviation; widens the probability distribution.</li>
+      <li><strong>Premium paid ($)</strong> — optional; net debit (positive) or credit received (negative). Enables break-even price display.</li>
+    </ul>
+
+    <p><strong>Inputs (Row 2 — strategy-specific):</strong></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Strategy</th><th>Extra fields shown</th></tr></thead>
+        <tbody>
+          <tr><td>Straddle</td><td>Strike</td></tr>
+          <tr><td>Bull call / Bear put spread</td><td>Long strike, Short strike</td></tr>
+          <tr><td>Iron condor</td><td>Put long, Put short, Call short, Call long</td></tr>
+          <tr><td>Calendar spread</td><td>Strike, Net debit</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>Results:</strong></p>
+    <ul>
+      <li>A 2×2 metric grid: Expected Value, P(profit), Max Loss, Max Gain.</li>
+      <li>Break-even prices as amber badges (when Premium paid is provided).</li>
+      <li>Interactive payoff diagram.</li>
+      <li>Historical backtest comparison return (optional — enable "Include historical backtest").</li>
+    </ul>
+
+    <h2>3 · Full Analysis</h2>
+    <p>Runs the complete pipeline in one click: <strong>Forecast → Strategy evaluation → AI explanation</strong>. Same inputs as the forecast card. The Research Assistant (with RAG context) generates a plain-language summary of what the data means and which strategies fit the current environment.</p>
+
+    <div class="callout info">
+      <strong>OpenAI API key</strong>
+      Without a key the explanation is a well-structured placeholder. Set your key in Settings → AI &amp; Research. The key is stored per-user and takes precedence over any <code>OPENAI_API_KEY</code> env var.
+    </div>
+
+    <h2>4 · Position Sizing</h2>
+    <p>Compute the mathematically optimal trade size before entering. See <a href="#concept-kelly">Kelly Criterion</a> for the underlying theory.</p>
+    <ul>
+      <li>Enter your capital, historical win rate, average win/loss amounts, and max risk %.</li>
+      <li>Optionally enter max loss per contract to compute max contracts.</li>
+      <li>Results: Full Kelly %, <strong>Half Kelly % (recommended)</strong>, Fixed Risk $, Max Contracts.</li>
+    </ul>
+  </section>
+
+<section id="page-volatility">
+    <h1>Volatility Dashboard</h1>
+    <p>Choose <em>when</em> to enter a trade before choosing <em>which</em> trade. This page answers: are options cheap or expensive right now?</p>
+    <figure class="manual-figure">
+      <img src="/user-manual/images/ui-volatility.png" alt="Volatility dashboard" width="1440" height="900" loading="lazy" />
+      <figcaption>HV, IV Rank, IV Percentile, expected move, IV vs HV-20 chart.</figcaption>
+    </figure>
+
+    <h2>How to use it</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Select a symbol and date range, click Analyze.</strong>
+        <p>The date range controls how much history is used to calculate IV Rank and HV. A full year of data gives the most meaningful IV Rank reading.</p>
+      </div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Read the IV Rank gauge.</strong>
+        <p>The progress bar fills left-to-right from 0 to 100. Green = low (options cheap), yellow = moderate, red = high (options expensive).</p>
+      </div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Read the Strategy Guidance card.</strong>
+        <p>A colored dot and short paragraph summarize the recommended strategy class for the current vol environment.</p>
+      </div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Compare IV and HV-20 on the chart.</strong>
+        <p>When the orange IV line is above the green HV-20 line, options are pricing in more movement than has been realized — a premium-selling environment.</p>
+      </div></div>
+    </div>
+
+    <h2>Metrics at a glance</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Metric</th><th>What it tells you</th><th>Data needed</th></tr></thead>
+        <tbody>
+          <tr><td>HV-10 / 20 / 30 / 60</td><td>How much the stock has been moving historically (annualized).</td><td>Underlying bars only</td></tr>
+          <tr><td>Current IV</td><td>The market's forward-looking volatility expectation.</td><td>Options bars with IV</td></tr>
+          <tr><td>IV Rank (IVR)</td><td>Where today's IV sits within the past year's range (0–100).</td><td>Options bars with IV</td></tr>
+          <tr><td>IV Percentile (IVP)</td><td>% of trading days where IV was lower than today.</td><td>Options bars with IV</td></tr>
+          <tr><td>Expected Move (30d)</td><td>±$ / ±% one-sigma range the market implies over 30 days.</td><td>Options bars with IV</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout tip">
+      <strong>No IV data?</strong>
+      The HV windows are computed from underlying bars alone. The IV Rank, IV Percentile, Expected Move, and chart require options contracts with implied volatility to be synced.
+    </div>
+  </section>
+
+<section id="page-backtests">
+    <h1>Backtests Page</h1>
+    <p>Create, browse, and inspect historical strategy simulations powered by <a href="https://www.backtrader.com/" target="_blank">Backtrader</a>.</p>
+
+    <h2>Creating a backtest</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Go to Backtests → New backtest.</strong>
+      </div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Select a strategy, symbol, and date range.</strong>
+        <p>Defaults are pre-filled from Settings. Starting cash defaults to $100,000.</p>
+      </div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <strong>Click Run.</strong>
+        <p>The backend runs the Backtrader simulation and saves the equity curve and all trades.</p>
+      </div></div>
+    </div>
+
+    <h2>Available strategies</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Strategy</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>sma_crossover</code></td><td>Stock</td><td>Long when the 10-day SMA crosses above the 30-day SMA; flat otherwise.</td></tr>
+          <tr><td><code>sma_rsi</code></td><td>Stock</td><td>SMA crossover filtered by RSI (only long when RSI &lt; 70).</td></tr>
+          <tr><td><code>single_leg</code></td><td>Options</td><td>Buy and hold one options contract to expiry.</td></tr>
+          <tr><td><code>covered_call</code></td><td>Options</td><td>Long underlying + short call. Income-generating, capped upside.</td></tr>
+          <tr><td><code>protective_put</code></td><td>Options</td><td>Long underlying + long put. Downside protection at the cost of premium.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Reading backtest results</h2>
+    <p>Click any backtest in the list to open the detail view:</p>
+    <ul>
+      <li><strong>Equity curve</strong> — Portfolio value over time.</li>
+      <li><strong>Summary metrics</strong> — Total return, Sharpe ratio, max drawdown, win rate, number of trades.</li>
+      <li><strong>Trade list</strong> — Every entry/exit with date, price, and P&amp;L.</li>
+    </ul>
+  </section>
+
+<section id="page-trade">
+    <h1>Trade Page (E*TRADE Integration)</h1>
+    <p>Place live or sandbox orders via the E*TRADE brokerage API.</p>
+
+    <div class="callout warn">
+      <strong>Sandbox vs. live</strong>
+      Set <code>ETrade_SANDBOX=true</code> (default) to use the E*TRADE sandbox. Switch to <code>false</code> only for real trading — all orders are real.
+    </div>
+
+    <h2>Setup</h2>
+    <ol>
+      <li>Register an app at <a href="https://developer.etrade.com" target="_blank">developer.etrade.com</a> to get a Consumer Key and Secret.</li>
+      <li>Add the credentials to Settings or your <code>.env</code> file.</li>
+      <li>Complete the OAuth flow in the Trade page to get Access Tokens.</li>
+    </ol>
+
+    <h2>Available actions</h2>
+    <ul>
+      <li>View accounts and balances.</li>
+      <li>List open and filled orders.</li>
+      <li>Buy/sell equity (market or limit).</li>
+      <li>Buy options contracts (call or put, by expiry and strike).</li>
+      <li>Cancel open orders.</li>
+    </ul>
+  </section>
+
+<section id="page-settings">
+    <h1>Settings Page</h1>
+    <p>Per-user preferences that pre-fill forms across all dashboard pages.</p>
+    <figure class="manual-figure">
+      <img src="/user-manual/images/ui-settings.png" alt="Settings page" width="1440" height="900" loading="lazy" />
+      <figcaption>Defaults, broker keys, and data API keys (values masked when saved).</figcaption>
+    </figure>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Setting</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td>Default symbol</td><td>Pre-selected in Data, Research, and Backtest forms.</td></tr>
+          <tr><td>Default date range (from/to)</td><td>Pre-fills all date pickers.</td></tr>
+          <tr><td>Default strategy</td><td>Pre-selected in the new backtest form.</td></tr>
+          <tr><td>Massive API key</td><td>Used for data sync from Massive.com.</td></tr>
+          <tr><td>E*TRADE Consumer Key / Secret</td><td>Used for quote sync and trade placement.</td></tr>
+          <tr><td>OpenAI API key</td><td>Enables real LLM explanations in Research &amp; AI.</td></tr>
+          <tr><td>FRED / BLS / BEA API keys</td><td>Enables live macro data fetching.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout tip">
+      <strong>Key priority</strong>
+      API keys saved in Settings always take precedence over environment variables. This lets each user have their own keys without sharing a server config.
+    </div>
+  </section>
+</main>
+<script src="/user-manual/nav.js"></script>
+</body>
+</html>

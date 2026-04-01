@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Concepts — OptionsLab Manual</title>
+  <link rel="stylesheet" href="/user-manual/styles.css" />
+</head>
+<body>
+<nav id="sidebar" aria-label="Manual">
+  <div class="nav-logo">
+    <a href="/user-manual/index.html" class="nav-logo-link"><span>OptionsLab</span></a>
+    <small>User Manual</small>
+  </div>
+  <span class="nav-section">Chapters</span>
+    <a href="/user-manual/index.html">Home</a>
+    <a href="/user-manual/getting-started.html">Getting started</a>
+    <a href="/user-manual/dashboard.html">Dashboard</a>
+    <a href="/user-manual/concepts.html" class="active">Concepts</a>
+    <a href="/user-manual/workflows.html">Workflows</a>
+    <a href="/user-manual/docs.html">Documentation</a>
+    <a href="/user-manual/reference.html">API &amp; glossary</a>
+
+  <span class="nav-section">On this page</span>
+    <a href="#concept-options">Options basics</a>
+    <a href="#concept-strategies">Strategies</a>
+    <a href="#concept-volatility">Volatility</a>
+    <a href="#concept-forecasting">Forecasting</a>
+    <a href="#concept-kelly">Kelly</a>
+    <a href="#concept-breakeven">Break-even</a>
+    <a href="#concept-macro">Macro data</a>
+
+</nav>
+<main>
+<section id="concept-options">
+    <h1>Core Concepts — Options Basics</h1>
+    <p>Options are contracts that give the buyer the <em>right (but not obligation)</em> to buy or sell an asset at a fixed price before a deadline.</p>
+
+    <div class="concept-card">
+      <h3>Calls and Puts</h3>
+      <p>A <strong>call</strong> profits when the underlying rises above the strike. A <strong>put</strong> profits when the underlying falls below the strike.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>Strike price (K)</td><td>The agreed buy/sell price in the contract.</td></tr>
+            <tr><td>Expiration date (DTE)</td><td>The date the contract expires. DTE = days to expiry.</td></tr>
+            <tr><td>Premium</td><td>The price paid by the buyer to the seller.</td></tr>
+            <tr><td>ITM / ATM / OTM</td><td>In/At/Out of the money — whether exercising the option now would be profitable.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/terms/o/option.asp" target="_blank">Investopedia — Options</a>
+        <a class="ext-link" href="https://www.theocc.com/education" target="_blank">OCC Options Education</a>
+        <a class="ext-link" href="https://www.cmegroup.com/education/courses/introduction-to-options.html" target="_blank">CME Group — Intro to Options</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>The Greeks</h3>
+      <p>Sensitivity measures that describe how an option's price changes with market variables.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Greek</th><th>Measures sensitivity to</th><th>Intuition</th></tr></thead>
+          <tbody>
+            <tr><td>Delta (Δ)</td><td>Underlying price</td><td>Call delta ≈ probability of expiring ITM. 0.5 delta = ATM.</td></tr>
+            <tr><td>Gamma (Γ)</td><td>Rate of change of Delta</td><td>High gamma = delta changes fast as price moves.</td></tr>
+            <tr><td>Theta (Θ)</td><td>Time decay</td><td>Options lose value every day. Sellers collect theta; buyers pay it.</td></tr>
+            <tr><td>Vega (ν)</td><td>Implied Volatility</td><td>IV rises → options get more expensive. Vega tells you how much.</td></tr>
+            <tr><td>Rho (ρ)</td><td>Interest rates</td><td>Minor effect for short-dated options.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/trading/using-the-greeks-to-understand-options/" target="_blank">Investopedia — The Greeks</a>
+        <a class="ext-link" href="https://en.wikipedia.org/wiki/Greeks_(finance)" target="_blank">Wikipedia — Greeks (finance)</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Black-Scholes Model</h3>
+      <p>The foundational options pricing formula. It derives a theoretical fair value for European-style options based on current price, strike, time to expiry, risk-free rate, and implied volatility.</p>
+      <div class="formula">
+        C = S·N(d₁) − K·e<sup>−rT</sup>·N(d₂)
+        <br/>
+        d₁ = [ln(S/K) + (r + σ²/2)·T] / (σ·√T)
+        <span class="comment">   ← Standardized distance to strike</span>
+        <br/>
+        d₂ = d₁ − σ·√T
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/terms/b/blackscholes.asp" target="_blank">Investopedia — Black-Scholes</a>
+        <a class="ext-link" href="https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model" target="_blank">Wikipedia — Black-Scholes</a>
+      </div>
+    </div>
+  </section>
+
+<section id="concept-strategies">
+    <h1>Strategy Types</h1>
+    <p>OptionsLab evaluates six multi-leg options strategies. All payoffs are computed at expiry (European-style).</p>
+
+    <div class="concept-card">
+      <h3>Long Straddle</h3>
+      <p>Buy a call and a put at the same strike. Profits when the underlying makes a <em>large move in either direction</em>. Best entered when IV is low (cheap options).</p>
+      <div class="formula">
+        Payoff = max(S−K, 0) + max(K−S, 0) − Premium
+        <br/>
+        Break-even: K − Premium &nbsp;|&nbsp; K + Premium
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/terms/s/straddle.asp" target="_blank">Investopedia — Straddle</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Bull Call Spread (Vertical Spread)</h3>
+      <p>Buy a lower-strike call, sell a higher-strike call. Capped upside, capped downside. Directional bullish, lower cost than outright long call.</p>
+      <div class="formula">
+        Max gain = (Short − Long) − Net debit
+        <br/>
+        Max loss = Net debit paid
+        <br/>
+        Break-even = Long strike + Net debit
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/terms/b/bullcallspread.asp" target="_blank">Investopedia — Bull Call Spread</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Bear Put Spread (Vertical Spread)</h3>
+      <p>Buy a higher-strike put, sell a lower-strike put. Directional bearish with capped risk and reward.</p>
+      <div class="formula">
+        Break-even = Long strike − Net debit
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/terms/b/bearputspread.asp" target="_blank">Investopedia — Bear Put Spread</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Iron Condor</h3>
+      <p>Combine a bear call spread and a bull put spread. Profits when the underlying stays between the inner strikes. Premium-selling strategy — best in high-IV environments.</p>
+      <div class="formula">
+        Strikes: Put-Long &lt; Put-Short &lt; Call-Short &lt; Call-Long
+        <br/>
+        Max gain = Net credit collected
+        <br/>
+        Break-even: Put-Short − credit &nbsp;|&nbsp; Call-Short + credit
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/terms/i/ironcondor.asp" target="_blank">Investopedia — Iron Condor</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Calendar Spread</h3>
+      <p>Buy a longer-dated option and sell a shorter-dated option at the same strike. Profits from the faster time decay of the short leg and IV expansion. Approximated as European in this tool.</p>
+      <div class="formula">
+        Approx break-even: Strike ± (Net debit / 2)
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/terms/c/calendarspread.asp" target="_blank">Investopedia — Calendar Spread</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Covered Call &amp; Protective Put (Backtests only)</h3>
+      <p>Available in the Backtests module via Backtrader. Not evaluated by the strategy engine (which works with multi-leg payoff functions).</p>
+      <ul>
+        <li><strong>Covered call</strong>: long stock + short call. Income strategy, caps upside.</li>
+        <li><strong>Protective put</strong>: long stock + long put. Insurance strategy, limits downside.</li>
+      </ul>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/terms/c/coveredcall.asp" target="_blank">Investopedia — Covered Call</a>
+        <a class="ext-link" href="https://www.investopedia.com/terms/p/protective-put.asp" target="_blank">Investopedia — Protective Put</a>
+      </div>
+    </div>
+  </section>
+
+<section id="concept-volatility">
+    <h1>Volatility Metrics</h1>
+
+    <div class="concept-card">
+      <h3>Historical Volatility (HV)</h3>
+      <p>The annualized standard deviation of log returns over a rolling window. Measures how much the stock <em>has been</em> moving. Available at 10, 20, 30, and 60-day windows.</p>
+      <div class="formula">
+        HV<sub>n</sub> = σ(log(Close<sub>t</sub> / Close<sub>t-1</sub>), n days) × √252
+        <br/>
+        <span class="comment">252 = trading days per year</span>
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/terms/h/historicalvolatility.asp" target="_blank">Investopedia — Historical Volatility</a>
+        <a class="ext-link" href="https://en.wikipedia.org/wiki/Volatility_(finance)" target="_blank">Wikipedia — Volatility (finance)</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Implied Volatility (IV)</h3>
+      <p>The volatility value that makes a Black-Scholes model price match the market's actual option price. It represents the market's <em>forward expectation</em> of volatility. When IV &gt; HV, options are pricing in more movement than has been realized — often a premium-selling opportunity.</p>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/terms/i/impliedvolatility.asp" target="_blank">Investopedia — Implied Volatility</a>
+        <a class="ext-link" href="https://www.tastytrade.com/learn-center/trading-concepts/implied-volatility" target="_blank">tastytrade — IV guide</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>IV Rank (IVR)</h3>
+      <p>Where today's IV sits within the past year's range, expressed as 0–100.</p>
+      <div class="formula">
+        IVR = (IV<sub>now</sub> − IV<sub>52w low</sub>) / (IV<sub>52w high</sub> − IV<sub>52w low</sub>) × 100
+      </div>
+      <p>IVR 0 = IV at yearly low · IVR 100 = IV at yearly high · IVR 50 = exactly in the middle.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>IVR</th><th>Interpretation</th><th>Preferred strategy class</th></tr></thead>
+          <tbody>
+            <tr><td>≥ 60</td><td><span class="badge red">High</span> — options expensive</td><td>Sell premium: iron condors, credit spreads</td></tr>
+            <tr><td>35 – 59</td><td><span class="badge yellow">Moderate</span> — neutral</td><td>Depends on directional forecast</td></tr>
+            <tr><td>&lt; 35</td><td><span class="badge green">Low</span> — options cheap</td><td>Buy premium: straddles, debit spreads</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.tastytrade.com/learn-center/trading-concepts/iv-rank-and-iv-percentile" target="_blank">tastytrade — IVR &amp; IVP</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>IV Percentile (IVP)</h3>
+      <p>The percentage of trading days in the lookback window where IV was <em>lower</em> than today. More robust than IVR because it is not distorted by single outlier spikes.</p>
+      <div class="formula">
+        IVP = count(IV<sub>history</sub> &lt; IV<sub>now</sub>) / count(IV<sub>history</sub>) × 100
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://optionalpha.com/implied-volatility-percentile" target="_blank">Option Alpha — IVP</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Expected Move (1σ, 30-day)</h3>
+      <p>The market's implied price range over 30 calendar days. At one sigma, ~68% of outcomes should land inside this range — the same concept as the straddle price approximation.</p>
+      <div class="formula">
+        EM = Current Price × IV × √(30 / 252)
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.tastytrade.com/learn-center/trading-concepts/expected-move" target="_blank">tastytrade — Expected Move</a>
+      </div>
+    </div>
+  </section>
+
+<section id="concept-forecasting">
+    <h1>Forecasting Models</h1>
+
+    <div class="concept-card">
+      <h3>ARIMA (AutoRegressive Integrated Moving Average)</h3>
+      <p>A classical time-series model. Fits a linear combination of the stock's own past values and past errors. Fast, interpretable, and good at capturing trend and mean-reversion. OptionsLab defaults to an AR(1) order — meaning the best single-step predictor is yesterday's value.</p>
+      <div class="formula">
+        AR(1): y<sub>t</sub> = c + φ·y<sub>t-1</sub> + ε<sub>t</sub>
+        <br/>
+        <span class="comment">φ = autoregressive coefficient, ε = noise</span>
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/terms/a/autoregressive-integrated-moving-average-arima.asp" target="_blank">Investopedia — ARIMA</a>
+        <a class="ext-link" href="https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average" target="_blank">Wikipedia — ARIMA</a>
+        <a class="ext-link" href="https://www.statsmodels.org/stable/tsa.html" target="_blank">statsmodels docs</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Gradient Boosting (GB)</h3>
+      <p>A tree-ensemble model trained on lagged features (past close prices, returns, SMAs, realized volatility). Better at capturing non-linear patterns but requires more data than ARIMA and is slower to fit. Uses scikit-learn's <code>HistGradientBoostingRegressor</code>.</p>
+      <div class="ext-links">
+        <a class="ext-link" href="https://scikit-learn.org/stable/modules/ensemble.html#histogram-based-gradient-boosting" target="_blank">scikit-learn — HistGradientBoosting</a>
+        <a class="ext-link" href="https://en.wikipedia.org/wiki/Gradient_boosting" target="_blank">Wikipedia — Gradient Boosting</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Macro Enrichment</h3>
+      <p>When macro data (GDP, CPI, etc.) has been synced, enable <em>include_macro</em> in the forecast request. The model will join monthly macro indicators onto the daily OHLCV features using forward-fill, giving the model macroeconomic context.</p>
+      <div class="ext-links">
+        <a class="ext-link" href="https://fred.stlouisfed.org/" target="_blank">FRED — Federal Reserve Economic Data</a>
+        <a class="ext-link" href="https://www.bls.gov/data/" target="_blank">BLS — Bureau of Labor Statistics</a>
+        <a class="ext-link" href="https://apps.bea.gov/iTable/" target="_blank">BEA — Bureau of Economic Analysis</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Evaluation Metrics</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Formula</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr><td>Directional accuracy</td><td>count(correct direction) / n</td><td>% of steps where the model got up/down right. Random = 50%.</td></tr>
+            <tr><td>RMSE</td><td>√(mean((actual − pred)²))</td><td>Average prediction error in price units. Lower = better.</td></tr>
+            <tr><td>MAE</td><td>mean(|actual − pred|)</td><td>Mean absolute error. More interpretable than RMSE.</td></tr>
+            <tr><td>Backtest return</td><td>Long on "up", short on "down"</td><td>Simple strategy return from following the model's signals.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://en.wikipedia.org/wiki/Root-mean-square_deviation" target="_blank">Wikipedia — RMSE</a>
+      </div>
+    </div>
+  </section>
+
+<section id="concept-kelly">
+    <h1>Kelly Criterion &amp; Position Sizing</h1>
+
+    <div class="concept-card">
+      <h3>The Kelly Formula</h3>
+      <p>Derived by John Kelly (Bell Labs, 1956), this formula computes the <em>fraction of capital</em> that maximizes the long-run growth rate of a trading account given a known edge.</p>
+      <div class="formula">
+        f* = (p × b − q) / b
+        <br/><br/>
+        <span class="comment">p  = win rate (e.g. 0.55)</span>
+        <br/>
+        <span class="comment">q  = loss rate = 1 − p</span>
+        <br/>
+        <span class="comment">b  = avg_win / avg_loss  (the odds ratio)</span>
+      </div>
+      <p><strong>Example</strong>: p = 0.55, avg win = $500, avg loss = $300<br/>
+        b = 500/300 = 1.667 &nbsp;→&nbsp; f* = (0.55×1.667 − 0.45) / 1.667 ≈ <strong>0.55 (55%)</strong>
+      </p>
+      <div class="callout warn">
+        <strong>55% is way too aggressive in practice.</strong>
+        Full Kelly leads to catastrophic drawdowns whenever your edge estimate is even slightly off. Most professional traders use Half-Kelly or less.
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://en.wikipedia.org/wiki/Kelly_criterion" target="_blank">Wikipedia — Kelly Criterion</a>
+        <a class="ext-link" href="https://www.investopedia.com/articles/trading/04/091504.asp" target="_blank">Investopedia — Kelly Criterion</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Half-Kelly (Recommended)</h3>
+      <p>Use f* / 2 as your position size. Research shows Half-Kelly retains ~75% of the long-run optimal growth rate while dramatically reducing drawdown and providing a safety margin for edge estimation error.</p>
+      <div class="formula">
+        f_half = f* / 2
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.amazon.com/Fortune-Formula-Scientific-Betting-Casinos/dp/0809045990" target="_blank">Fortune's Formula (book)</a>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>Fixed Fractional Sizing</h3>
+      <p>A simpler alternative: risk a fixed percentage of capital (e.g. 1–2%) on any single trade, regardless of estimated edge. More robust when edge estimates are uncertain.</p>
+      <div class="formula">
+        Dollar risk = Capital × risk_%
+        <br/>
+        Units = Dollar risk / (Max loss per unit)
+      </div>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.investopedia.com/articles/trading/05/031405.asp" target="_blank">Investopedia — Fixed Fractional</a>
+      </div>
+    </div>
+  </section>
+
+<section id="concept-breakeven">
+    <h1>Break-Even Analysis</h1>
+    <p>The break-even price is the underlying price at expiry where a strategy's net P&amp;L = 0 after accounting for the premium paid or credit received. Always compute break-even before entering a trade — it tells you how much the stock needs to move in your favor just to cover costs.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Strategy</th><th>Break-even formula</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Long Straddle</td><td>Strike ± Premium</td><td>K=100, prem=$4 → BE at $96 and $104</td></tr>
+          <tr><td>Bull Call Spread</td><td>Long strike + Net debit</td><td>Long 98, debit $2 → BE at $100</td></tr>
+          <tr><td>Bear Put Spread</td><td>Long strike − Net debit</td><td>Long 102, debit $2 → BE at $100</td></tr>
+          <tr><td>Iron Condor</td><td>Put-short − credit; Call-short + credit</td><td>PS=97, CS=103, credit=$1.50 → BE at $95.50 and $104.50</td></tr>
+          <tr><td>Calendar Spread</td><td>Strike ± (debit / 2) — approximation</td><td>K=100, debit=$2 → BE ~$99 and ~$101</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>In OptionsLab, enter the premium in the <strong>Premium paid ($)</strong> field when evaluating a strategy. Break-even prices appear as amber badges in the results section.</p>
+    <div class="ext-links">
+      <a class="ext-link" href="https://www.investopedia.com/terms/b/breakevenpoint.asp" target="_blank">Investopedia — Break-even Point</a>
+    </div>
+  </section>
+
+<section id="concept-macro">
+    <h1>Macro &amp; Economic Data</h1>
+    <p>Macroeconomic conditions affect volatility, sector rotation, and risk appetite. OptionsLab pulls data from three primary government sources:</p>
+    <div class="concept-card">
+      <h3>FRED (Federal Reserve Economic Data)</h3>
+      <p>The most comprehensive free source for U.S. macro data — 800,000+ time series including GDP, CPI, interest rates, employment, and market indicators like VIX.</p>
+      <div class="ext-links">
+        <a class="ext-link" href="https://fred.stlouisfed.org/" target="_blank">FRED website</a>
+        <a class="ext-link" href="https://fred.stlouisfed.org/docs/api/fred/" target="_blank">FRED API docs</a>
+      </div>
+    </div>
+    <div class="concept-card">
+      <h3>BLS (Bureau of Labor Statistics)</h3>
+      <p>Employment situation, CPI-U, wages, and productivity data. Updated monthly.</p>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.bls.gov/" target="_blank">BLS website</a>
+        <a class="ext-link" href="https://www.bls.gov/developers/" target="_blank">BLS API docs</a>
+      </div>
+    </div>
+    <div class="concept-card">
+      <h3>BEA (Bureau of Economic Analysis)</h3>
+      <p>National accounts, GDP by expenditure, corporate profits. Data is typically quarterly.</p>
+      <div class="ext-links">
+        <a class="ext-link" href="https://www.bea.gov/" target="_blank">BEA website</a>
+        <a class="ext-link" href="https://apps.bea.gov/api/signup/" target="_blank">BEA API docs</a>
+      </div>
+    </div>
+    <div class="callout tip">
+      <strong>How macro data improves forecasts</strong>
+      When macro data is synced, enable "Macro enrichment" in the forecast form. The model forward-fills monthly indicators onto daily bars, giving the forecaster context like "current GDP trend" or "current CPI level" alongside price features.
+    </div>
+  </section>
+</main>
+<script src="/user-manual/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "options-lab",
+  "private": true,
+  "description": "OptionsLab — backtesting, forecasting, and trading dashboard",
+  "scripts": {
+    "dev:api": "PYTHONPATH=. uvicorn api.main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:web": "cd web && npm run dev",
+    "test": "PYTHONPATH=. python -m pytest tests/ -v",
+    "test:cov": "PYTHONPATH=. python -m pytest tests/ -v --cov --cov-report=term-missing",
+
+    "synth": "cd infrastructure && cdk synth",
+    "synth:dev": "cd infrastructure && cdk synth --context stage=dev",
+    "synth:staging": "cd infrastructure && cdk synth --context stage=staging",
+    "synth:production": "cd infrastructure && cdk synth --context stage=production",
+
+    "diff": "cd infrastructure && cdk diff",
+    "diff:dev": "cd infrastructure && cdk diff --context stage=dev",
+    "diff:staging": "cd infrastructure && cdk diff --context stage=staging",
+    "diff:production": "cd infrastructure && cdk diff --context stage=production",
+
+    "deploy:dev": "cd infrastructure && cdk deploy --all --context stage=dev",
+    "deploy:staging": "cd infrastructure && cdk deploy --all --context stage=staging",
+    "deploy:production": "cd infrastructure && cdk deploy --all --context stage=production",
+
+    "destroy:dev": "cd infrastructure && cdk destroy --all --context stage=dev",
+    "destroy:staging": "cd infrastructure && cdk destroy --all --context stage=staging",
+    "destroy:production": "cd infrastructure && cdk destroy --all --context stage=production"
+  }
+}

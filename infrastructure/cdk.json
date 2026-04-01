@@ -1,0 +1,32 @@
+{
+  "app": "python3 app.py",
+  "watch": {
+    "include": ["**"],
+    "exclude": [
+      "README.md",
+      "cdk*.json",
+      "requirements*.txt",
+      "**/__pycache__",
+      "**/.mypy_cache",
+      "**/node_modules",
+      "cdk.out"
+    ]
+  },
+  "context": {
+    "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
+    "@aws-cdk/core:checkSecretUsage": true,
+    "@aws-cdk/core:target-partitions": ["aws", "aws-cn"],
+
+    "stage": "dev",
+
+    "dev": {
+      "note": "Override any EnvironmentConfig field here — values are read in infrastructure/config.py"
+    },
+    "staging": {
+      "note": "Set account/region per stage if deploying to different AWS accounts"
+    },
+    "production": {
+      "note": "Production account should have MFA on root and separate IAM deploy roles"
+    }
+  }
+}

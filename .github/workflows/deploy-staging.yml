@@ -1,0 +1,110 @@
+name: Deploy — Staging
+
+# Triggers on every push to main after tests pass.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:   # allow manual trigger from GitHub UI
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false   # never cancel an in-flight deploy
+
+jobs:
+  deploy:
+    name: Deploy staging stacks
+    runs-on: ubuntu-latest
+    environment: staging      # maps to GitHub Environment 'staging' (for secrets)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # ---------------------------------------------------------------- #
+      # Install tools
+      # ---------------------------------------------------------------- #
+      - name: Install AWS CDK CLI
+        run: npm install -g aws-cdk
+
+      - name: Install CDK Python dependencies
+        run: pip install -r infrastructure/requirements.txt
+
+      # ---------------------------------------------------------------- #
+      # Configure AWS credentials
+      # Secrets stored in GitHub Environment 'staging':
+      #   STAGING_AWS_ACCESS_KEY_ID
+      #   STAGING_AWS_SECRET_ACCESS_KEY
+      # Variables stored in GitHub Environment 'staging':
+      #   AWS_ACCOUNT_ID
+      #   AWS_REGION
+      #   GITHUB_REPO_URL   (e.g. https://github.com/org/OptionsLab)
+      # ---------------------------------------------------------------- #
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.STAGING_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.STAGING_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # ---------------------------------------------------------------- #
+      # Bootstrap (idempotent — safe to run on every deploy)
+      # ---------------------------------------------------------------- #
+      - name: CDK bootstrap
+        run: >
+          cdk bootstrap
+          aws://${{ vars.AWS_ACCOUNT_ID }}/${{ vars.AWS_REGION }}
+        working-directory: infrastructure
+
+      # ---------------------------------------------------------------- #
+      # Deploy
+      # ---------------------------------------------------------------- #
+      - name: CDK deploy — data stack
+        run: >
+          cdk deploy TradingDataStack-staging
+          --require-approval never
+          --context stage=staging
+          --context account=${{ vars.AWS_ACCOUNT_ID }}
+          --context region=${{ vars.AWS_REGION }}
+        working-directory: infrastructure
+
+      - name: CDK deploy — API stack
+        run: >
+          cdk deploy TradingApiStack-staging
+          --require-approval never
+          --context stage=staging
+          --context account=${{ vars.AWS_ACCOUNT_ID }}
+          --context region=${{ vars.AWS_REGION }}
+        working-directory: infrastructure
+
+      - name: CDK deploy — Amplify stack
+        if: vars.GITHUB_REPO_URL != ''
+        run: >
+          cdk deploy TradingAmplifyStack-staging
+          --require-approval never
+          --context stage=staging
+          --context account=${{ vars.AWS_ACCOUNT_ID }}
+          --context region=${{ vars.AWS_REGION }}
+          --context github_repo=${{ vars.GITHUB_REPO_URL }}
+        working-directory: infrastructure
+
+      # ---------------------------------------------------------------- #
+      # Post-deploy smoke test
+      # ---------------------------------------------------------------- #
+      - name: Smoke test — health endpoint
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name TradingApiStack-staging \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text)
+          echo "API URL: $API_URL"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/health")
+          echo "Health status: $STATUS"
+          [ "$STATUS" = "200" ] || (echo "Health check failed" && exit 1)

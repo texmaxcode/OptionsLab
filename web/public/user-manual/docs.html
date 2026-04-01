@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentation — OptionsLab Manual</title>
+  <link rel="stylesheet" href="/user-manual/styles.css" />
+</head>
+<body>
+<nav id="sidebar" aria-label="Manual">
+  <div class="nav-logo">
+    <a href="/user-manual/index.html" class="nav-logo-link"><span>OptionsLab</span></a>
+    <small>User Manual</small>
+  </div>
+  <span class="nav-section">Chapters</span>
+    <a href="/user-manual/index.html">Home</a>
+    <a href="/user-manual/getting-started.html">Getting started</a>
+    <a href="/user-manual/dashboard.html">Dashboard</a>
+    <a href="/user-manual/concepts.html">Concepts</a>
+    <a href="/user-manual/workflows.html">Workflows</a>
+    <a href="/user-manual/docs.html" class="active">Documentation</a>
+    <a href="/user-manual/reference.html">API &amp; glossary</a>
+
+  <span class="nav-section">On this page</span>
+    <a href="#about">About</a>
+    <a href="#data-features">Data &amp; features</a>
+    <a href="#authentication">Authentication</a>
+    <a href="#forecasting">Forecasting</a>
+    <a href="#strategy-engine">Strategy engine</a>
+    <a href="#research">Research Assistant</a>
+    <a href="#risk">Risk tools</a>
+    <a href="#volatility">Volatility</a>
+    <a href="#economic">Economic data</a>
+    <a href="#frameworks">Frameworks</a>
+    <a href="#tsf-plan">TSF architecture</a>
+    <a href="#deployment">Deployment (AWS)</a>
+
+</nav>
+<main>
+
+<section id="about">
+  <h1>Documentation</h1>
+  <p>This chapter pulls together the same material as the Markdown files in the repository <code>docs/</code>. Use it when you <strong>run OptionsLab from source</strong> or deploy it yourself. For the latest edits and line-level detail, read the <code>.md</code> files in the repo clone.</p>
+  <figure class="manual-figure">
+    <img src="/user-manual/images/ui-research.png" alt="Research and AI dashboard" width="1440" height="900" loading="lazy" />
+    <figcaption>Research &amp; AI — forecast, strategy evaluation, full analysis, position sizing (screenshot from local dev server).</figcaption>
+  </figure>
+</section>
+
+<section id="data-features">
+  <h2>Data &amp; feature engineering</h2>
+  <p>Underlying OHLCV lives in <code>underlying_bars</code>; options in <code>options_contracts</code> / <code>options_bars</code>. Ingestion: <code>data/sync.py</code> (Massive) or <code>data/etrade_sync.py</code> (E*TRADE). Backtests and forecasting read the same tables.</p>
+  <ul>
+    <li><code>features.loader.load_underlying_series(symbol, from_date, to_date)</code> — OHLCV DataFrame (same path as backtests).</li>
+    <li><code>features.ohlcv_features.build_ohlcv_features(df, …)</code> — returns, <code>return_lag_*</code>, <code>sma_*</code>, rolling volatility (annualized), <code>target</code> (next-period return). Parameters: <code>target_col</code>, <code>return_lags</code>, <code>sma_windows</code>, <code>vol_window</code>, <code>drop_na</code>.</li>
+    <li><code>features.ohlcv_features.get_feature_columns(…)</code> — column list for a config.</li>
+    <li><code>features.macro_features.load_macro_features(from_date, to_date, series_ids=None)</code> — wide macro DataFrame from DB (e.g. <code>fred_GDP</code>).</li>
+    <li><code>features.macro_features.join_macro_features(ohlcv_df, macro_df, fill_method="ffill", prefix="macro_")</code> — forward-fill and join.</li>
+  </ul>
+  <p>Forecast API: <code>include_macro: true</code> joins macro features; response includes <code>macro_enriched: true</code> when enrichment succeeds. Options IV in <code>options_bars.implied_volatility</code> feeds strategy and Research Assistant context.</p>
+</section>
+
+<section id="authentication">
+  <h2>Authentication</h2>
+  <p><strong>JWT</strong> bearer tokens. Web UI stores the token in <strong>localStorage</strong> (<code>ol_token</code>) and sends <code>Authorization: Bearer …</code> on requests. Tokens expire after <strong>24 hours</strong>. No refresh token — log in again.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Endpoint</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST /auth/register</code></td><td>JSON body: email + password (≥ 8 chars). <code>409</code> if email exists.</td></tr>
+        <tr><td><code>POST /auth/login</code></td><td>Returns <code>access_token</code>. <code>401</code> if invalid.</td></tr>
+        <tr><td><code>GET /auth/me</code></td><td>Current user (requires token).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Protected route prefixes</strong> (examples): <code>/user/settings</code>, <code>/lab/backtests</code>, <code>/lab/strategy-engine</code>, <code>/lab/etrade</code>, <code>/forecasting</code>, <code>/research</code>, <code>/economic</code>, <code>/volatility</code>, <code>/risk</code>, sync, contracts delete. <strong>Public examples:</strong> <code>GET /</code>, <code>GET /symbols</code>, <code>GET /bars</code> (read-only market data per deployment).</p>
+  <p><strong>CLI example</strong> (local API):</p>
+  <pre><code>TOKEN=$(curl -s -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","password":"yourpassword"}' \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+curl http://localhost:8000/user/settings -H "Authorization: Bearer $TOKEN"</code></pre>
+  <div class="callout warn">
+    <strong>Production</strong>
+    Set <code>JWT_SECRET_KEY</code> (generate with <code>python -c "import secrets; print(secrets.token_hex(32))"</code>). Set <code>ALLOWED_ORIGINS</code> to your real web origin(s). Broker/data keys in Settings are stored in the database — use HTTPS and protect DB access.
+  </div>
+</section>
+
+<section id="forecasting">
+  <h2>Time-series forecasting</h2>
+  <p><strong>Package:</strong> <code>forecasting/</code>. Models: <strong>ARIMA</strong> (<code>ARIMAForecaster</code>, default order often <code>(1,0,0)</code>) and <strong>GB</strong> (<code>GBForecaster</code>, <code>HistGradientBoostingRegressor</code>, lagged features, <code>n_lag</code> default 5).</p>
+  <p><strong>Interface:</strong> <code>fit(series)</code>, <code>predict(horizon)</code>, <code>predict_direction(horizon)</code>. ARIMA optional: <code>get_confidence_interval</code>.</p>
+  <p><strong>Registry:</strong> <code>GET /forecast/runs</code> lists saved runs (<code>TRADING_FORECAST_REGISTRY</code>).</p>
+  <p><strong>Evaluation:</strong> <code>evaluate_forecast</code> → directional accuracy, RMSE, MAE; <code>backtest_returns_from_signals</code> for simple long/short signal returns.</p>
+  <p><strong>Dependencies:</strong> statsmodels, pandas, numpy, scikit-learn.</p>
+</section>
+
+<section id="strategy-engine">
+  <h2>Strategy engine</h2>
+  <p>Strategy kinds: <code>vertical_spread_call</code>, <code>vertical_spread_put</code>, <code>straddle</code>, <code>iron_condor</code>, <code>calendar_spread_call</code>, <code>calendar_spread_put</code>. European payoff at expiry; per-share.</p>
+  <p><code>POST /strategy-engine/evaluate</code> — forecast mean/std or distribution, strikes, optional <code>premium_paid</code>, optional <code>include_backtest=true</code> for historical comparison.</p>
+  <p><code>POST /strategy-engine/discover</code> — auto forecast + rank all strategies by expected value (<code>spread_width_pct</code> default ~2%).</p>
+  <p>Code: <code>strategy_engine/payoff.py</code>, <code>strategies.py</code>, <code>expected_value.py</code>, <code>breakeven.py</code>.</p>
+</section>
+
+<section id="research">
+  <h2>Research Assistant (LLM)</h2>
+  <p>OpenAI <strong>gpt-4o-mini</strong> when <code>OPENAI_API_KEY</code> is set (env or user Settings). Otherwise structured placeholder.</p>
+  <p><strong>RAG:</strong> <code>research_assistant/rag.py</code> — TF-IDF cosine retrieval; optional <strong>chromadb</strong> for semantic search. <code>POST /research/rag/ingest</code>, <code>POST /research/rag/retrieve</code>.</p>
+  <p><strong>Routes:</strong> <code>POST /research/explain</code>, <code>POST /research/analyze</code> (full pipeline).</p>
+  <p><strong>UI:</strong> <code>/dashboard/research</code> — Run forecast, Evaluate strategy, Full analysis, Position sizing, Recent forecast runs (see <code>docs/RESEARCH_ASSISTANT.md</code> for layout).</p>
+</section>
+
+<section id="risk">
+  <h2>Risk tools</h2>
+  <p>Kelly: <code>f* = (p×b − q)/b</code>; half-Kelly recommended. <code>POST /risk/position-size</code>, <code>POST /risk/breakeven</code>. Strategy evaluate includes break-evens with <code>premium_paid</code>.</p>
+  <p>Metrics: <code>max_drawdown</code>, <code>volatility_annualized</code>, <code>var_historical</code> (95%). Code: <code>risk/position_sizing.py</code>, <code>risk/metrics.py</code>.</p>
+</section>
+
+<section id="volatility">
+  <h2>Volatility dashboard</h2>
+  <p><code>GET /volatility/{symbol}?from_date=&amp;to_date=</code> — HV 10/20/30/60, IV, IV Rank, IV Percentile, expected move 30d, <code>iv_series</code>, <code>hv_20_series</code>. UI: <code>/dashboard/volatility</code>; chart component <code>VolatilityChart.tsx</code>.</p>
+  <p>IV Rank / IV Percentile definitions and strategy guidance thresholds match <code>docs/VOLATILITY.md</code>.</p>
+  <figure class="manual-figure">
+    <img src="/user-manual/images/ui-volatility.png" alt="Volatility dashboard" width="1440" height="900" loading="lazy" />
+    <figcaption>Volatility — HV, IV Rank, IV Percentile, expected move, IV vs HV-20 chart.</figcaption>
+  </figure>
+</section>
+
+<section id="economic">
+  <h2>Macro &amp; economic data</h2>
+  <p><code>GET /economic/series</code> — query: <code>source</code> = <code>fred</code> | <code>bls</code> | <code>bea</code>, <code>series_id</code>, optional <code>start_date</code> / <code>end_date</code>. Response: normalized <code>points: [{date, value}]</code>.</p>
+  <p>Keys: <code>FRED_API_KEY</code>, <code>BLS_API_KEY</code>, <code>BEA_API_KEY</code> (env or Settings; user settings win when set).</p>
+  <p><strong>Dashboard:</strong> <code>/dashboard/economic</code> — load series, charts, “Import all presets”. <strong>Bulk CLI:</strong></p>
+  <pre><code>PYTHONPATH=. python3 scripts/sync_economic.py --all-presets --from 2015-01-01 --to 2024-12-31 --to-db</code></pre>
+  <p>Uses <code>TRADING_API_URL</code> (default <code>http://localhost:8000</code>) to call the API.</p>
+</section>
+
+<section id="frameworks">
+  <h2>Frameworks &amp; major libraries</h2>
+  <p>From <code>docs/FRAMEWORKS.md</code>:</p>
+  <ul>
+    <li><strong>FastAPI</strong> — API (<code>api/</code>).</li>
+    <li><strong>Next.js</strong> — dashboard (<code>web/</code>).</li>
+    <li><strong>React</strong>, <strong>TypeScript</strong>, <strong>Tailwind CSS</strong>.</li>
+    <li><strong>SQLAlchemy</strong> — ORM (<code>models/</code>, <code>storage/</code>).</li>
+    <li><strong>AWS CDK (Python)</strong> — VPC, RDS, Lambda (Docker image), API Gateway, Amplify (<code>infrastructure/</code>).</li>
+    <li><strong>Docker</strong> — Lambda image (<code>Dockerfile.lambda</code>).</li>
+    <li><strong>Pydantic</strong>, <strong>httpx</strong>, <strong>Backtrader</strong>, <strong>D3</strong> (charts), <strong>pytest</strong>, <strong>ESLint</strong>.</li>
+    <li>Optional: <strong>chromadb</strong> for RAG (not in base <code>requirements.txt</code>).</li>
+  </ul>
+</section>
+
+<section id="tsf-plan">
+  <h2>TSF Options AI — architecture</h2>
+  <p>From <code>docs/TSF_OPTIONS_AI_IMPLEMENTATION_PLAN.md</code>. Phases (data, forecasting, strategy engine, LLM, RAG, E2E, discovery) are implemented.</p>
+  <p><strong>Data flow (conceptual):</strong> Massive/E*TRADE → storage → features → forecasting → strategy_engine → research_assistant (RAG + LLM).</p>
+  <pre><code>Market Data → storage/ (ORM) ─┬→ Backtrader backtests
+                              └→ features/ → forecasting/ → strategy_engine/ → research_assistant/</code></pre>
+  <p><strong>Principles:</strong> shared data layer for backtest vs forecast; modular pipeline; placeholder LLM without key; per-user secrets in DB with env fallback; same CDK stacks across dev/staging/production with <code>infrastructure/config.py</code>.</p>
+</section>
+
+<section id="deployment">
+  <h2>Deployment (AWS CDK)</h2>
+  <p>Condensed from <code>docs/DEPLOYMENT.md</code>. <strong>Architecture:</strong> Browser → Amplify (Next.js, <code>NEXT_PUBLIC_API_URL</code>) → API Gateway → Lambda (FastAPI Docker) → RDS PostgreSQL; JWT and DB credentials in Secrets Manager.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Setting</th><th>dev</th><th>staging</th><th>production</th></tr></thead>
+      <tbody>
+        <tr><td>Branch (Amplify)</td><td>develop</td><td>staging</td><td>main</td></tr>
+        <tr><td>RDS</td><td>t3.micro</td><td>t3.micro</td><td>t3.small, Multi-AZ</td></tr>
+        <tr><td>API <code>/docs</code></td><td>On</td><td>On</td><td>Off</td></tr>
+        <tr><td>Lambda memory</td><td>512 MB</td><td>1024 MB</td><td>1024 MB</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Tools:</strong> Python ≥ 3.12, Node ≥ 18, AWS CLI, CDK ≥ 2.170, Docker running for <code>cdk deploy</code>.</p>
+  <p><strong>Deploy (from repo root):</strong> <code>npm run deploy:dev</code> / <code>deploy:staging</code> / <code>deploy:production</code>, or <code>cd infrastructure &amp;&amp; cdk deploy --all --context stage=… --context account=… --context region=…</code>.</p>
+  <p><strong>CI/CD:</strong> <code>test.yml</code> on push/PR; <code>deploy-staging.yml</code> on <code>main</code>; <code>deploy-production.yml</code> on tag <code>v*.*.*</code>. Configure GitHub Environments and AWS secrets per <code>DEPLOYMENT.md</code>.</p>
+  <p><strong>Health:</strong> <code>GET /health</code> returns status and DB check.</p>
+  <p><strong>Local Next env:</strong> copy <code>web/.env.local.example</code> → <code>.env.local</code>, set <code>NEXT_PUBLIC_API_URL=http://localhost:8000</code>.</p>
+  <p><strong>Troubleshooting:</strong> Lambda 502 → CloudWatch logs, SG/RDS connectivity, cold start timeout; Amplify build → ensure <code>NEXT_PUBLIC_API_URL</code> is defined.</p>
+</section>
+
+</main>
+<script src="/user-manual/nav.js"></script>
+</body>
+</html>
