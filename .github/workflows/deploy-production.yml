@@ -1,11 +1,11 @@
 name: Deploy — Production
 
-# Triggers only on version tags (v1.0.0, v1.2.3, etc.)
-# or a manual workflow dispatch with explicit confirmation.
+# Disabled: does not run on tags or manual dispatch. To re-enable tag-based production
+# deploys, uncomment `push.tags` below and set `guard.if` / `deploy.if` to true (or remove them).
 on:
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+  # push:
+  #   tags:
+  #     - "v[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
     inputs:
       confirm:
@@ -18,6 +18,7 @@ concurrency:
 
 jobs:
   guard:
+    if: false   # Production deploy off — set to true (and uncomment `push.tags` above) to turn on
     name: Confirm production deploy
     runs-on: ubuntu-latest
     steps:
@@ -30,6 +31,7 @@ jobs:
           fi
 
   deploy:
+    if: false   # Production deploy off — set to true to turn on
     name: Deploy production stacks
     needs: guard
     runs-on: ubuntu-latest

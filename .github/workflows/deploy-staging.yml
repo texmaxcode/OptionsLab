@@ -1,10 +1,11 @@
 name: Deploy — Staging
 
-# Triggers on every push to main after tests pass.
+# Disabled: does not run on push or manual dispatch. To re-enable automatic deploys on
+# every push to main, uncomment `push` below and set `deploy.if` to true (or remove it).
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:   # allow manual trigger from GitHub UI
+  # push:
+  #   branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: deploy-staging
@@ -12,6 +13,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: false   # Staging deploy off — set to true (and uncomment `push` above) to turn on
     name: Deploy staging stacks
     runs-on: ubuntu-latest
     environment: staging      # maps to GitHub Environment 'staging' (for secrets)
