@@ -55,3 +55,6 @@ Thumbs.db
 *.swo
 *~
 
+# AWS CDK — synthesized CloudFormation (regenerate: cd infrastructure && cdk synth)
+infrastructure/cdk.out/
+

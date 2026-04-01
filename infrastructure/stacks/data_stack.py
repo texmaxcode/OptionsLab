@@ -83,7 +83,7 @@ class DataStack(Stack):
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
             ),
             security_groups=[db_sg],
-            credentials=rds.Credentials.from_generated_password("postgres"),
+            credentials=rds.Credentials.from_generated_secret("postgres"),
             database_name="trading",
             allocated_storage=config.db_allocated_gb,
             max_allocated_storage=config.db_max_allocated_gb,

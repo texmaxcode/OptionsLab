@@ -1,5 +1,13 @@
 # Options Backtesting Tools
 
+## NO WARRANTY — NO GUARANTEE OF RESULTS
+
+**This software is provided as-is, without warranty of any kind.** There is **no guarantee** that you will achieve any particular outcome, profit, or investment success. Past or simulated performance does not indicate future results.
+
+**E\*TRADE is integrated for live trading.** If you connect real accounts or place real orders, **you alone are responsible** for your trading decisions, orders, taxes, compliance, and any gains or losses. The authors and contributors are not financial advisors and assume no liability for how you use this project.
+
+---
+
 Backtest options and equity strategies with [Backtrader](https://www.backtrader.com/), using market data from [Massive.com](https://massive.com/docs) or E*TRADE. Data is validated with Pydantic and stored with SQLAlchemy.
 
 ## Features
