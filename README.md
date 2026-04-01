@@ -2,8 +2,8 @@
 
 <p align="center">
   <img
-    src="./docs/images/options-lab-dashboard.png"
-    alt="Options Lab web dashboard (dark theme)"
+    src="./web/public/user-manual/images/ui-dashboard.png"
+    alt="Options Lab — Overview dashboard with macro charts (screenshot)"
     width="920"
   />
 </p>
